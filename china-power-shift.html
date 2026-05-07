@@ -468,8 +468,7 @@ function openPanel(m){
   if(hs){
     portraitEl.innerHTML=`<img src="${hs}" alt="${m.en}">`;
   } else {
-    const initials=m.en.split(' ').map(w=>w[0]).join('').slice(0,2);
-    portraitEl.innerHTML=`<div class="panel-portrait-placeholder">${initials}</div>`;
+    portraitEl.innerHTML=`<div class="panel-portrait-placeholder"></div>`;
   }
 
   // header
