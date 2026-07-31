@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="design_doc_mode" content="canvas">
+<style>
+@font-face{font-family:'Acumin';src:url('uploads/AcuminVariableConcept.otf') format('opentype');font-weight:100 900;font-display:swap;}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800&family=Alegreya:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#FFFFFF;font-family:'Archivo',sans-serif;padding:0;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+.label{font:500 11px/1 'Archivo',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:rgba(0,0,0,.4);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.badge{background:rgba(0,0,0,.1);padding:3px 9px;border-radius:4px;font-size:10px;}
+.card{overflow:hidden;}
+
+/* Tooltip */
+#tt{position:fixed;background:#3A434C;color:#F5F1EB;padding:14px 16px;border-radius:4px;font-family:'Archivo',sans-serif;font-size:12px;line-height:1.5;pointer-events:none;display:none;z-index:999;max-width:240px;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+
+/* Dot hover */
+.dot{cursor:pointer;transition:transform .12s ease,opacity .12s;transform-box:fill-box;transform-origin:center;}
+.navtab{transition:color .12s ease;}
+.navtab:hover{color:#002855 !important;}
+.navtab:hover span{text-decoration:underline #002855 2px !important;text-underline-offset:16px !important;}
+.dot:hover{transform:scale(1.35);opacity:1;filter:brightness(1.1);}
+
+/* Bar animation */
+@keyframes growUp{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.bar-anim{transform-origin:bottom;animation:growUp .6s ease-out both;}
+
+/* Line draw animation */
+@keyframes drawLine{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+.line-anim{stroke-dasharray:1;stroke-dashoffset:1;animation:drawLine 2s ease-out both;}
+.fill-anim{opacity:0;animation:fadeIn .5s ease-out 1.8s both;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+@keyframes dotPop{0%{opacity:0;r:0}60%{opacity:1;r:11}80%{r:8}100%{opacity:1;r:9}}
+@keyframes aiEntry{0%{opacity:0;r:0}50%{opacity:1;r:16}70%{r:7}85%{r:11}100%{opacity:1;r:9}}
+@keyframes aiPulse{0%,100%{opacity:.88;r:9}50%{opacity:.5;r:12.5}}
+@keyframes rowFade{from{opacity:0}to{opacity:1}}
+
+/* Gold pulse */
+@keyframes pulse{0%,100%{r:10;opacity:.9}50%{r:13;opacity:.6}}
+.ai-pulse{animation:pulse 2.4s ease-in-out infinite;}
+
+/* Side panel */
+#fd-panel{position:absolute;top:0;right:-384px;width:360px;height:100%;background:#F6F8F9;border-left:1px solid #D2D6DA;transition:right .28s cubic-bezier(.4,0,.2,1);overflow-y:auto;z-index:10;}
+#fd-panel.open{right:0;}
+.fp-chip{display:inline-flex;align-items:center;gap:5px;background:#EBEEF0;border-radius:20px;font-size:14px;font-weight:500;color:#3A434C;padding:4px 12px;}
+.fp-meta-item{display:flex;flex-direction:column;gap:3px;}
+.fp-meta-label{font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:#7C878E;}
+.fp-meta-val{font-size:14px;color:#002855;font-weight:400;}
+.fp-prov-row{display:flex;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px solid #EBEEF0;font-size:14px;color:#3A434C;line-height:1.5;}
+.fp-prov-row:last-child{border-bottom:none;}
+#gate-pw:focus{border-color:#002855 !important;}
+</style>
+<script>
+function tryUnlock(e){
+  e.preventDefault();
+  var v=document.getElementById('gate-pw').value.trim().toLowerCase();
+  if(v==='aspi2026'){try{sessionStorage.setItem('aspi-gate','1');}catch(x){}unlockGate();}
+  else{document.getElementById('gate-err').style.visibility='visible';}
+  return false;
+}
+function unlockGate(){var g=document.getElementById('gate');if(g)g.remove();}
+window.addEventListener('DOMContentLoaded',function(){
+  var ok=false;try{ok=sessionStorage.getItem('aspi-gate')==='1';}catch(x){}
+  if(ok)unlockGate();else{var i=document.getElementById('gate-pw');if(i)i.focus();}
+});
+</script>
+</head>
+<body>
+
+<div id="gate" style="position:fixed;inset:0;z-index:9999;background:#FFFFFF;display:flex;align-items:center;justify-content:center;">
+  <div style="width:400px;">
+    <div style="font-size:11px;font-weight:400;letter-spacing:.18em;text-transform:uppercase;color:#7C878E;margin-bottom:40px;">ASPI · Digital Trade Agreement Tracker</div>
+    <h1 style="font-family:'Acumin',sans-serif;font-size:32px;font-weight:600;line-height:1.2;letter-spacing:-.01em;color:#1E252B;margin:0 0 16px;">Protected prototype</h1>
+    <div style="width:40px;height:2px;background:#FFC600;margin:0 0 20px;"></div>
+    <p style="font-size:14px;line-height:1.6;color:#3A434C;margin:0 0 28px;">Enter the access password to view the interactive data module.</p>
+    <form onsubmit="return tryUnlock(event)" style="display:flex;flex-direction:column;gap:12px;">
+      <input id="gate-pw" type="password" autocomplete="off" placeholder="Password" oninput="document.getElementById('gate-err').style.visibility='hidden'" style="height:48px;padding:0 16px;font-family:'Archivo',sans-serif;font-size:14px;color:#1E252B;background:#FFFFFF;border:1px solid #D2D6DA;border-radius:0;outline:none;" />
+      <div id="gate-err" style="visibility:hidden;font-size:12px;color:#B3261E;">Incorrect password. Please try again.</div>
+      <button type="submit" style="height:48px;background:#1E252B;color:#FFFFFF;font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;border:none;cursor:pointer;">Enter</button>
+    </form>
+  </div>
+</div>
+
+<div id="tt"></div>
+
+<div style="flex:0 0 auto;">
+  <div class="card" style="width:1440px;background:#FFFFFF;position:relative;overflow:hidden;border:1px solid #D2D6DA;">
+    <!-- Nav -->
+    <div style="height:48px;border-bottom:1px solid #D2D6DA;display:flex;align-items:center;justify-content:space-between;padding:0 56px;">
+      <span style="font-size:11px;font-weight:400;letter-spacing:.18em;text-transform:uppercase;color:#7C878E;">ASPI · Digital Trade Agreement Tracker</span>
+      <span style="font-size:11px;font-weight:400;color:#7C878E;">Source: ARAIA Report · 2025</span>
+    </div>
+    <div style="height:40px;border-bottom:1px solid #D2D6DA;display:flex;align-items:stretch;padding:0 56px;">
+      <div id="nav-intro" class="navtab" onclick="switchView('intro')" style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#002855;padding:0 24px 0 0;margin-right:8px;display:flex;align-items:center;cursor:pointer;"><span style="text-decoration:underline #002855 2px;text-underline-offset:16px;">Introduction</span></div>
+      <div id="nav-timeline" class="navtab" onclick="switchView('timeline')" style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#7C878E;padding:0 24px 0 0;margin-right:8px;display:flex;align-items:center;cursor:pointer;"><span>Timeline</span></div>
+      <div id="nav-country" class="navtab" onclick="switchView('country')" style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#7C878E;padding:0 24px 0 0;margin-right:8px;display:flex;align-items:center;cursor:pointer;"><span>Full Data Set</span></div>
+      <div id="nav-trends" class="navtab" onclick="switchView('trends')" style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#7C878E;padding:0 24px 0 0;display:flex;align-items:center;cursor:pointer;"><span>Trends</span></div>
+    </div>
+    <!-- Intro view -->
+    <div id="fd-intro-wrap" style="height:728px;display:flex;flex-direction:row;overflow:hidden;">
+      <div style="flex:0 0 616px;display:flex;flex-direction:column;justify-content:center;padding:0 16px 0 56px;">
+        <div style="font-size:10px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:#7C878E;margin-bottom:32px;">Asia-Pacific · 2000–2025</div>
+        <h1 style="font-family:'Acumin',sans-serif;font-size:44px;font-weight:600;line-height:1.15;letter-spacing:-.01em;color:#1E252B;margin:0 0 32px;">The Rules for AI Are<br>Being Written in<br>Trade Agreements</h1>
+        <div style="width:40px;height:2px;background:#FFC600;margin:0 0 24px;"></div>
+        <p style="font-family:'Archivo',sans-serif;font-size:16px;font-weight:400;line-height:1.6;color:#3A434C;margin:0 0 40px;max-width:420px;">Eleven of 96 Asia-Pacific digital trade agreements contain AI-specific provisions. None existed before 2020.</p>
+        <button onclick="switchView('country')" style="padding:16px 32px;background:#1E252B;color:#FFFFFF;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;border:none;cursor:pointer;font-family:'Archivo',sans-serif;align-self:flex-start;">Explore the data →</button>
+      </div>
+      <div style="flex:1 1 0;border-left:1px solid #EBEEF0;overflow:hidden;padding:0 56px 0 0;" id="fd-intro-chart-wrap"></div>
+    </div>
+    <!-- Controls -->
+    <div id="fd-controls" style="padding:16px 56px 16px;border-bottom:1px solid #D2D6DA;min-height:100px;box-sizing:border-box;display:none;flex-direction:row;align-items:center;justify-content:space-between;gap:16px;">
+      <div>
+        <div id="fd-eyebrow" style="font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:#7C878E;margin-bottom:8px;">Full Data Set</div>
+        <h2 id="fd-heading" style="font-family:'Acumin',sans-serif;font-size:30px;font-weight:600;letter-spacing:-.005em;color:#1E252B;">Every agreement, at a glance</h2>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;margin-top:16px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center;" id="fd-group-area"></div>
+        <!-- Unified filter area -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center;" id="fd-filter-area"></div>
+      </div>
+    </div>
+    <!-- SVG viz -->
+    <div id="fd-wrap" style="height:624px;overflow:hidden;padding:8px 56px 16px;display:none;"></div>
+    <div id="fd-country-wrap" style="height:624px;overflow:hidden;padding:16px 56px 32px;display:none;"></div>
+    <div id="fd-trends-wrap" style="height:624px;overflow:hidden;padding:8px 56px 32px;display:none;"></div>
+    <!-- Side panel -->
+    <div id="fd-panel">
+      <div style="padding:24px 24px 48px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+          <span id="fp-year" style="font-size:10px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#7C878E;"></span>
+          <button onclick="closePanel()" style="background:none;border:none;cursor:pointer;color:#7C878E;font-size:20px;line-height:1;padding:0;">&#x2715;</button>
+        </div>
+        <div id="fp-aitag" style="margin-bottom:16px;"></div>
+        <h3 id="fp-name" style="font-family:'Acumin',sans-serif;font-size:20px;font-weight:600;color:#1E252B;line-height:1.3;margin-bottom:8px;"></h3>
+        <div id="fp-type" style="font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:#7C878E;margin-bottom:24px;"></div>
+        <div id="fp-parties" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;"></div>
+        <div id="fp-meta" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px 0;border-top:1px solid #EBEEF0;border-bottom:1px solid #EBEEF0;margin-bottom:24px;"></div>
+        <p id="fp-summary" style="font-family:'Archivo',sans-serif;font-size:14px;font-weight:400;line-height:1.6;color:#3A434C;margin-bottom:32px;"></p>
+        <div id="fp-provisions"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STYLED DROPDOWN ──────────────────────────────────────────
+function makeDropdown(label, options, selIdx, onChange){
+  var wrap=document.createElement('div');
+  wrap.style.cssText='display:flex;align-items:center;gap:8px;';
+  var lab=document.createElement('span');
+  lab.textContent=label;
+  lab.style.cssText='font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#7C878E;font-family:Archivo,sans-serif;';
+  var selWrap=document.createElement('div');
+  selWrap.style.cssText='position:relative;display:inline-flex;align-items:center;';
+  var sel=document.createElement('select');
+  options.forEach(function(o,i){var op=document.createElement('option');op.value=i;op.textContent=o;if(i===selIdx)op.selected=true;sel.appendChild(op);});
+  sel.style.cssText='appearance:none;-webkit-appearance:none;-moz-appearance:none;background:#FFFFFF;border:1px solid #D2D6DA;border-radius:6px;font-size:13px;color:#1E252B;padding:6px 30px 6px 12px;cursor:pointer;font-family:Archivo,sans-serif;outline:none;';
+  sel.onfocus=function(){sel.style.borderColor='#002855';};
+  sel.onblur=function(){sel.style.borderColor='#D2D6DA';};
+  sel.onchange=function(){onChange(+sel.value);};
+  var caret=document.createElement('span');
+  caret.textContent='▾';
+  caret.style.cssText='position:absolute;right:11px;pointer-events:none;color:#7C878E;font-size:10px;';
+  selWrap.appendChild(sel);selWrap.appendChild(caret);
+  wrap.appendChild(lab);wrap.appendChild(selWrap);
+  return wrap;
+}
+
+// ── VIEW SWITCHER ────────────────────────────────────────────
+window.switchView = function(view) {
+  var views = ['intro','timeline','country','trends'];
+  document.getElementById('fd-intro-wrap').style.display = view==='intro' ? 'flex' : 'none';
+  document.getElementById('fd-wrap').style.display = view==='timeline' ? '' : 'none';
+  document.getElementById('fd-country-wrap').style.display = view==='country' ? '' : 'none';
+  document.getElementById('fd-trends-wrap').style.display = view==='trends' ? '' : 'none';
+  document.getElementById('fd-controls').style.display = view==='intro' ? 'none' : 'flex';
+  // Populate filter area
+  var fa=document.getElementById('fd-filter-area');
+  fa.innerHTML='';
+  var ga=document.getElementById('fd-group-area'); ga.innerHTML='';
+  if(view==='timeline'){
+    [['all','All'],['D','DEA / DTA'],['F','FTA'],['ai','AI Provisions']].forEach(function(p,i){
+      var btn=document.createElement('button');
+      btn.textContent=p[1];
+      btn.style.cssText='background:'+(i===0?'#1E252B':'none')+';border:1px solid '+(i===0?'#1E252B':'#D2D6DA')+';border-radius:20px;font-size:12px;color:'+(i===0?'#FFFFFF':'#7C878E')+';padding:4px 16px;cursor:pointer;font-family:\'Archivo\',sans-serif;';
+      btn.onclick=function(){ filterDots(p[0],btn); };
+      fa.appendChild(btn);
+    });
+  } else if(view==='trends'){
+    // no filter pills
+  } else if(view==='country'){
+    var PROVF_L=[
+      {lbl:'All',fn:function(){return true;}},
+      {lbl:'Source Code',fn:function(p){return p[2]>0;}},
+      {lbl:'Cybersecurity',fn:function(p){return p[3]>0;}},
+      {lbl:'Right to Regulate',fn:function(p){return p[4]>0;}},
+      {lbl:'AI-Specific',fn:function(p){return p[0]>0;}}
+    ];
+    var provDD=makeDropdown('Provision',PROVF_L.map(function(f){return f.lbl;}),window.fdProvIdx||0,function(idx){
+      window.fdProvIdx=idx;
+      applyProvFilter();
+    });
+    fa.appendChild(provDD);
+    window.fdPROVF_L=PROVF_L;
+    function applyProvFilter(){
+      var f=PROVF_L[window.fdProvIdx||0];
+      document.querySelectorAll('#fd-country-wrap .dot').forEach(function(d){
+        var p=(d.getAttribute('data-prov')||'0,0,0,0,0,0').split(',').map(Number);
+        d.style.opacity=f.fn(p)?'1':'0.06';
+      });
+    }
+    window.fdApplyProvFilter=applyProvFilter;
+    var GROUP_OPTS=[['none','None'],['region','Region'],['asean','ASEAN status'],['pioneers','Digital pioneers'],['tier','Development tier']];
+    var curGIdx=GROUP_OPTS.findIndex(function(o){return o[0]===(window.fdGroupBy||'none');}); if(curGIdx<0)curGIdx=0;
+    var grpDD=makeDropdown('Group by',GROUP_OPTS.map(function(o){return o[1];}),curGIdx,function(idx){
+      window.fdGroupBy=GROUP_OPTS[idx][0]; buildCountryView(); if(window.fdApplyProvFilter) window.fdApplyProvFilter();
+    });
+    grpDD.style.marginLeft='16px';
+    fa.appendChild(grpDD);
+  }
+  ['intro','timeline','country','trends'].forEach(function(v){
+    var el = document.getElementById('nav-'+v);
+    if(!el) return;
+    var active = v===view;
+    var span = el.querySelector('span');
+    if(span){
+      span.style.textDecoration = active ? 'underline #002855 2px' : 'none';
+      span.style.textUnderlineOffset = active ? '16px' : '0';
+    }
+    el.style.color = active ? '#002855' : '#7C878E';
+  });
+  // Update controls title per view
+  var titles={
+    timeline:{eyebrow:'Timeline · 2000–2025',h2:'How trade agreements shaped digital rules'},
+    country:{eyebrow:'Full Data Set',h2:'96 agreements across Asia-Pacific'},
+    trends:{eyebrow:'Provision Trends · 2000–2025',h2:'How digital governance layered over time'}
+  };
+  if(titles[view]){
+    document.getElementById('fd-eyebrow').textContent=titles[view].eyebrow;
+    document.getElementById('fd-heading').textContent=titles[view].h2;
+  }
+  if(view==='timeline'){ buildTimelineView(); }
+  if(view==='country'){ buildCountryView(); if(window.fdApplyProvFilter) window.fdApplyProvFilter(); }
+  if(view==='trends'){ var tw2=document.getElementById('fd-trends-wrap'); tw2.innerHTML=''; buildTrendsChart(); }
+  if(view==='intro'){ var ic=document.getElementById('fd-intro-chart-wrap'); ic.innerHTML=''; buildIntroChart(); startIntroLoop(); } else { stopIntroLoop(); }
+};
+var introLoopTimer=null;
+function startIntroLoop(){
+  stopIntroLoop();
+  introLoopTimer=setInterval(function(){
+    var ic=document.getElementById('fd-intro-chart-wrap');
+    if(!ic) return;
+    ic.innerHTML='';
+    buildIntroChart();
+  },28000);
+}
+function stopIntroLoop(){
+  if(introLoopTimer){clearInterval(introLoopTimer);introLoopTimer=null;}
+}
+
+function buildIntroChart(){
+  var wrap = document.getElementById('fd-intro-chart-wrap');
+  if(wrap.querySelector('svg')) return;
+  wrap.style.position='relative';
+  var tip=document.createElement('div');
+  tip.style.cssText='position:absolute;pointer-events:none;opacity:0;transition:opacity .12s;background:#3A434C;color:#FFFFFF;font-family:Archivo,sans-serif;font-size:11px;line-height:1.4;padding:7px 10px;border-radius:6px;white-space:nowrap;z-index:20;transform:translate(-50%,-100%);box-shadow:0 4px 14px rgba(0,40,85,0.25);';
+  wrap.appendChild(tip);
+  var CLIST=['SG','KR','AU','NZ','VN','ID','TH','MY','PH','BN','JP','KH','IN','CN'];
+  var CNAMES_I={SG:'Singapore',JP:'Japan',AU:'Australia',KR:'South Korea',CN:'China',NZ:'New Zealand',VN:'Vietnam',MY:'Malaysia',ID:'Indonesia',IN:'India',PH:'Philippines',TH:'Thailand',BN:'Brunei',KH:'Cambodia'};
+  var N=26, nc=CLIST.length;
+  var W=920, rowH=44, PAD={l:24,r:24,t:28,b:52};
+  var H=PAD.t+nc*rowH+PAD.b;
+  var cW=W-PAD.l-PAD.r;
+  var slot=cW/N;
+  function xC(i){return PAD.l+(i+0.5)*slot;}
+
+  var byC={};
+  CLIST.forEach(function(c){byC[c]={};});
+  AGMT.forEach(function(a){
+    var parts=a[1].indexOf('-')>=0?a[1].split('-'):[a[1]];
+    parts.forEach(function(p){
+      if(!byC[p])return;
+      var yi=a[0]-2000;
+      if(!byC[p][yi])byC[p][yi]=[];
+      byC[p][yi].push(a);
+    });
+  });
+
+  var ns='http://www.w3.org/2000/svg';
+  var svg=document.createElementNS(ns,'svg');
+  svg.setAttribute('width','100%');svg.setAttribute('height',H);
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  svg.style.display='block';
+
+  // 2020 glow band
+  var x20=xC(20)-slot/2;
+  var band=document.createElementNS(ns,'rect');
+  band.setAttribute('x',x20);band.setAttribute('y',PAD.t);
+  band.setAttribute('width',slot*6);band.setAttribute('height',nc*rowH);
+  band.setAttribute('fill','rgba(255,198,0,0.06)');
+  band.style.animation='rowFade 0.8s ease-out 2.0s both';
+  band.style.opacity='0';
+  svg.appendChild(band);
+
+  // 2020 line
+  var ml=document.createElementNS(ns,'line');
+  ml.setAttribute('x1',x20);ml.setAttribute('y1',PAD.t);ml.setAttribute('x2',x20);ml.setAttribute('y2',PAD.t+nc*rowH);
+  ml.setAttribute('stroke','rgba(255,198,0,0.35)');ml.setAttribute('stroke-width','1');ml.setAttribute('stroke-dasharray','4,4');
+  ml.style.animation='rowFade 0.5s ease-out 2.0s both';ml.style.opacity='0';
+  svg.appendChild(ml);
+
+  CLIST.forEach(function(c,ri){
+    var cy=PAD.t+ri*rowH+rowH/2;
+
+    // Row lane — centered through the dots, consistent with Full Data Set
+    var rl=document.createElementNS(ns,'line');
+    rl.setAttribute('x1',PAD.l);rl.setAttribute('y1',cy);
+    rl.setAttribute('x2',W-PAD.r);rl.setAttribute('y2',cy);
+    rl.setAttribute('stroke','rgba(180,186,192,0.4)');rl.setAttribute('stroke-width','1');
+    rl.style.animation='rowFade 0.4s ease-out '+(0.1+ri*0.05)+'s both';
+    rl.style.opacity='0';
+    svg.appendChild(rl);
+
+    // Dots
+    for(var yi=0;yi<N;yi++){
+      var agmts=byC[c][yi]||[];
+      agmts.forEach(function(a,si){
+        var x=xC(yi)+(si-(agmts.length-1)/2)*19;
+        var isAI=a[3]===1;
+        // Slow non-AI sweep (0.1s/year), pause at 2020, then AI burst
+        var baseDelay = yi < 20 ? (yi * 0.09) + (ri * 0.012) + 0.2
+                                 : 2.1 + ((yi-20) * 0.12) + (ri * 0.015);
+        var dot=document.createElementNS(ns,'circle');
+        dot.setAttribute('cx',x);dot.setAttribute('cy',cy);dot.setAttribute('r',9);
+        dot.setAttribute('class','dot');dot.style.cursor='pointer';
+        dot.addEventListener('click',function(){switchView('country');});
+        dot.setAttribute('data-year',a[0]);dot.setAttribute('data-party',a[1]);dot.setAttribute('data-ai',isAI?'1':'0');
+        var TN={D:'Digital Economy Agreement',C:'Comprehensive Economic Partnership',F:'Free Trade Agreement',P:'Partnership Agreement'};
+        var partynames=a[1].split('-').map(function(k){return CNAMES_I[k]||k;}).join(' – ');
+        dot.addEventListener('mousemove',function(ev){
+          var wr=wrap.getBoundingClientRect();
+          tip.style.left=(ev.clientX-wr.left)+'px';
+          tip.style.top=(ev.clientY-wr.top-12)+'px';
+        });
+        dot.addEventListener('mouseenter',function(){
+          tip.innerHTML='<span style="font-weight:600">'+partynames+'</span><br><span style="opacity:.75">'+a[0]+' · '+(TN[a[2]]||'Agreement')+(isAI?' · AI provisions':'')+'</span>';
+          tip.style.opacity='1';
+        });
+        dot.addEventListener('mouseleave',function(){tip.style.opacity='0';});
+        var fill=isAI?'rgba(255,198,0,0.92)':a[2]==='D'?'rgba(0,40,85,0.75)':a[2]==='C'?'rgba(124,135,142,0.75)':'rgba(180,186,192,0.5)';
+        dot.setAttribute('fill',fill);
+        if(isAI){dot.setAttribute('stroke','rgba(255,255,255,0.7)');dot.setAttribute('stroke-width','2');}
+        if(isAI){
+          dot.style.animation='aiEntry 0.55s cubic-bezier(.22,1.8,.36,1) '+baseDelay+'s both, aiPulse 2.4s ease-in-out '+(baseDelay+0.6)+'s infinite';
+          dot.style.filter='drop-shadow(0 0 6px rgba(255,198,0,0.7))';
+          dot.addEventListener('mouseenter',function(){this._a=this.style.animation;this.style.animation='';this.style.opacity='1';this.style.transform='scale(1.35)';this.style.transformBox='fill-box';this.style.transformOrigin='center';this.style.filter='drop-shadow(0 0 9px rgba(255,198,0,0.9))';});
+          dot.addEventListener('mouseleave',function(){this.style.animation=this._a;this.style.opacity='1';this.style.transform='';this.style.filter='drop-shadow(0 0 6px rgba(255,198,0,0.7))';});
+        } else {
+          dot.style.animation='dotPop 0.3s cubic-bezier(.34,1.3,.64,1) '+baseDelay+'s both';
+          dot.addEventListener('animationend',function(){this.style.animation='';this.style.opacity='1';});
+          dot.addEventListener('mouseenter',function(){this.style.animation='';this.style.opacity='1';});
+        }
+        dot.style.opacity='0';
+        svg.appendChild(dot);
+      });
+    }
+  });
+
+  // Year axis labels
+  [0,5,10,15,20,25].forEach(function(i){
+    var is2020 = i===20;
+    var t=document.createElementNS(ns,'text');
+    t.setAttribute('x',xC(i));t.setAttribute('y',PAD.t+nc*rowH+(is2020?28:22));
+    t.setAttribute('text-anchor','middle');t.setAttribute('font-family','Archivo,sans-serif');
+    t.setAttribute('font-size',is2020?'14':'11');t.setAttribute('font-weight',is2020?'600':'400');
+    t.setAttribute('fill',is2020?'#FFC600':'rgba(124,135,142,0.7)');
+    var fadeDelay = i < 20 ? (0.2 + i*0.09) : (2.0 + (i-20)*0.12);
+    t.style.animation='rowFade 0.4s ease-out '+fadeDelay+'s both';
+    t.style.opacity='0';
+    t.textContent=2000+i;
+    svg.appendChild(t);
+  });
+
+  // 2020 tick mark — extends upward into the chart to anchor the moment
+  var tick=document.createElementNS(ns,'line');
+  tick.setAttribute('x1',xC(20));tick.setAttribute('y1',PAD.t+nc*rowH);
+  tick.setAttribute('x2',xC(20));tick.setAttribute('y2',PAD.t+nc*rowH+6);
+  tick.setAttribute('stroke','#FFC600');tick.setAttribute('stroke-width','2');
+  tick.style.animation='rowFade 0.4s ease-out 2.0s both';tick.style.opacity='0';
+  svg.appendChild(tick);
+
+  wrap.appendChild(svg);
+}
+
+// ── BY COUNTRY SVG ───────────────────────────────────────────
+function buildCountryView(){
+  var wrap=document.getElementById('fd-country-wrap');
+  wrap.innerHTML='';
+  var CLIST=['SG','KR','AU','NZ','VN','ID','TH','MY','PH','BN','JP','KH','IN','CN'];
+  var CNAMES={SG:'Singapore',JP:'Japan',AU:'Australia',KR:'South Korea',CN:'China',NZ:'New Zealand',VN:'Vietnam',MY:'Malaysia',ID:'Indonesia',IN:'India',PH:'Philippines',TH:'Thailand',BN:'Brunei',KH:'Cambodia'};
+  var GROUPINGS={
+    region:[
+      {name:'Southeast Asia',codes:['SG','VN','ID','TH','MY','PH','BN','KH']},
+      {name:'Northeast Asia',codes:['JP','KR','CN']},
+      {name:'Oceania',codes:['AU','NZ']},
+      {name:'South Asia',codes:['IN']}
+    ],
+    asean:[
+      {name:'ASEAN Members',codes:['SG','VN','ID','TH','MY','PH','BN','KH']},
+      {name:'Dialogue Partners',codes:['JP','KR','CN','AU','NZ','IN']}
+    ],
+    pioneers:[
+      {name:'Digital-Economy Pioneers',codes:['SG','KR','AU','NZ','JP']},
+      {name:'Emerging Adopters',codes:['VN','ID','TH','MY','PH','BN','KH','IN','CN']}
+    ],
+    tier:[
+      {name:'High Income',codes:['SG','JP','KR','AU','NZ','BN']},
+      {name:'Upper-Middle Income',codes:['CN','MY','TH']},
+      {name:'Lower-Middle Income',codes:['VN','ID','PH','IN','KH']}
+    ]
+  };
+  var GROUPS=GROUPINGS[window.fdGroupBy||'none']||null;
+  var grouped=!!GROUPS;
+  var N=26, rowH=grouped?28:36, HEADH=22, GAP=8, PAD={l:110,r:32,t:16,b:48};
+  var W=1328;
+  var cW=W-PAD.l-PAD.r;
+  var slot=cW/N;
+  function xC(i){return PAD.l+(i+0.5)*slot;}
+
+  // Build country -> year -> agreements lookup
+  var byC={};
+  CLIST.forEach(function(c){byC[c]={};});
+  AGMT.forEach(function(a){
+    var parts=a[1].indexOf('-')>=0?a[1].split('-'):[a[1]];
+    parts.forEach(function(p){
+      if(!byC[p])return;
+      var yi=a[0]-2000;
+      if(!byC[p][yi])byC[p][yi]=[];
+      byC[p][yi].push(a);
+    });
+  });
+
+  // Ordered display entries (headers + countries), with y-coords
+  var entries=[];
+  if(grouped){
+    GROUPS.forEach(function(r){
+      entries.push({kind:'header',name:r.name});
+      r.codes.forEach(function(c){entries.push({kind:'country',code:c});});
+    });
+  } else {
+    CLIST.forEach(function(c){entries.push({kind:'country',code:c});});
+  }
+  var y=PAD.t, cIdx=0;
+  entries.forEach(function(en,i){
+    if(en.kind==='header'){ if(i>0) y+=GAP; en.y=y; y+=HEADH; }
+    else { en.y=y; en.cy=y+rowH/2; en.idx=cIdx++; y+=rowH; }
+  });
+  var contentBottom=y;
+  var H=contentBottom+PAD.b;
+
+  var ns='http://www.w3.org/2000/svg';
+  var svg=document.createElementNS(ns,'svg');
+  svg.setAttribute('width',W);svg.setAttribute('height',H);
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  svg.style.display='block';
+
+  // 2020 marker band + line
+  var x20=xC(20)-slot/2;
+  var band=document.createElementNS(ns,'rect');
+  band.setAttribute('x',x20);band.setAttribute('y',PAD.t);
+  band.setAttribute('width',slot*6);band.setAttribute('height',contentBottom-PAD.t);
+  band.setAttribute('fill','rgba(255,198,0,0.04)');
+  svg.appendChild(band);
+  var ml=document.createElementNS(ns,'line');
+  ml.setAttribute('x1',x20);ml.setAttribute('y1',PAD.t);ml.setAttribute('x2',x20);ml.setAttribute('y2',contentBottom);
+  ml.setAttribute('stroke','rgba(255,198,0,0.3)');ml.setAttribute('stroke-width','1');ml.setAttribute('stroke-dasharray','4,4');
+  svg.appendChild(ml);
+
+  // Region headers
+  entries.forEach(function(en){
+    if(en.kind!=='header')return;
+    var ht=document.createElementNS(ns,'text');
+    ht.setAttribute('x',2);ht.setAttribute('y',en.y+HEADH-9);
+    ht.setAttribute('text-anchor','start');ht.setAttribute('font-family','Archivo,sans-serif');
+    ht.setAttribute('font-size','10');ht.setAttribute('font-weight','600');ht.setAttribute('letter-spacing','1.4');
+    ht.setAttribute('fill','#002855');
+    ht.textContent=en.name.toUpperCase();
+    svg.appendChild(ht);
+    var hl=document.createElementNS(ns,'line');
+    hl.setAttribute('x1',PAD.l);hl.setAttribute('y1',en.y+HEADH-4);hl.setAttribute('x2',W-PAD.r);hl.setAttribute('y2',en.y+HEADH-4);
+    hl.setAttribute('stroke','rgba(0,40,85,0.12)');hl.setAttribute('stroke-width','0.5');
+    svg.appendChild(hl);
+  });
+
+  // Country rows: separator, label, count, dots
+  entries.forEach(function(en){
+    if(en.kind!=='country')return;
+    var c=en.code, cy=en.cy;
+    var lane=document.createElementNS(ns,'line');
+    lane.setAttribute('x1',PAD.l);lane.setAttribute('y1',cy);lane.setAttribute('x2',W-PAD.r);lane.setAttribute('y2',cy);
+    lane.setAttribute('stroke','rgba(180,186,192,0.4)');lane.setAttribute('stroke-width','1');
+    svg.appendChild(lane);
+    var rl=document.createElementNS(ns,'line');
+    rl.setAttribute('x1',PAD.l);rl.setAttribute('y1',en.y+rowH);rl.setAttribute('x2',W-PAD.r);rl.setAttribute('y2',en.y+rowH);
+    rl.setAttribute('stroke','rgba(180,186,192,0.15)');rl.setAttribute('stroke-width','0.5');
+    svg.appendChild(rl);
+
+    var total=0;Object.values(byC[c]).forEach(function(arr){total+=arr.length;});
+    var hasSG=c==='SG',hasCN=c==='CN';
+    var tLabel=document.createElementNS(ns,'text');
+    tLabel.setAttribute('x',0);tLabel.setAttribute('y',cy+4);
+    tLabel.setAttribute('text-anchor','start');tLabel.setAttribute('font-family','Archivo,sans-serif');
+    tLabel.setAttribute('font-size','12');tLabel.setAttribute('font-weight',hasSG?'600':'400');
+    tLabel.setAttribute('fill',hasCN?'#E31C79':hasSG?'#002855':'rgba(58,67,76,0.85)');
+    tLabel.textContent=CNAMES[c];
+    svg.appendChild(tLabel);
+
+    var tCount=document.createElementNS(ns,'text');
+    tCount.setAttribute('x',W-PAD.r+10);tCount.setAttribute('y',cy+4);
+    tCount.setAttribute('text-anchor','start');tCount.setAttribute('font-family','Archivo,sans-serif');
+    tCount.setAttribute('font-size','11');tCount.setAttribute('fill','rgba(124,135,142,0.7)');tCount.setAttribute('font-weight','400');
+    tCount.textContent=total>0?total:'';
+    svg.appendChild(tCount);
+
+    var aiDots=[];
+    var DR=Math.min(7,rowH/2-3);
+    var placed=[];
+    for(var yi=0;yi<N;yi++){
+      var agmts=byC[c][yi]||[];
+      agmts.forEach(function(a,si){
+        placed.push({a:a, x:xC(yi)+(si-(agmts.length-1)/2)*22});
+      });
+    }
+    placed.sort(function(p,q){return p.x-q.x;});
+    var MINGAP=DR*2+3;
+    for(var pi=1;pi<placed.length;pi++){
+      if(placed[pi].x-placed[pi-1].x<MINGAP){placed[pi].x=placed[pi-1].x+MINGAP;}
+    }
+    placed.forEach(function(p){
+      var a=p.a;
+      var fill,stroke,sw='0',rAdj=DR;
+      if(a[3]){fill='rgba(255,198,0,0.95)';stroke='#FFFFFF';sw='1';rAdj=DR;}
+      else if(a[2]==='D'){fill='#002855';rAdj=DR-0.9;}
+      else if(a[2]==='C'){fill='#7C878E';rAdj=DR-0.5;}
+      else{fill='#B6BCC2';}
+      var dot=document.createElementNS(ns,'circle');
+      dot.setAttribute('cx',p.x);dot.setAttribute('cy',cy);dot.setAttribute('r',rAdj);
+      dot.setAttribute('class','dot');
+      dot.setAttribute('data-year',a[0]);
+      dot.setAttribute('data-party',a[1]);
+      dot.setAttribute('data-type',a[2]);
+      dot.setAttribute('data-ai',a[3]?'1':'0');
+      dot.setAttribute('data-prov',[a[3],a[4]||0,a[5]||0,a[6]||0,a[7]||0,a[8]||0].join(','));
+      dot.setAttribute('fill',fill);
+      if(stroke){dot.setAttribute('stroke',stroke);dot.setAttribute('stroke-width',sw);}
+      if(a[3]){aiDots.push(dot);}else{svg.appendChild(dot);}
+    });
+    aiDots.forEach(function(d){svg.appendChild(d);});
+  });
+
+  // Year labels
+  [0,5,10,15,20,25].forEach(function(i){
+    var t=document.createElementNS(ns,'text');
+    t.setAttribute('x',xC(i));t.setAttribute('y',contentBottom+20);
+    t.setAttribute('text-anchor','middle');t.setAttribute('font-family','Archivo,sans-serif');
+    t.setAttribute('font-size',i===20?'12':'11');t.setAttribute('font-weight',i===20?'600':'300');
+    t.setAttribute('fill',i===20?'#FFC600':'rgba(124,135,142,0.7)');
+    t.textContent=2000+i;
+    svg.appendChild(t);
+  });
+
+    wrap.appendChild(svg);
+
+  var tt=document.getElementById('tt');
+  var TYPENAMES_C={D:'Digital Economy Agreement',F:'Free Trade Agreement',C:'Comprehensive Economic Partnership',P:'Partnership Agreement'};
+
+  svg.addEventListener('mousemove',function(e){
+    var el=e.target.closest('.dot');
+    if(!el){tt.style.display='none';return;}
+    document.getElementById('tt-dark').style.display='none';
+    var year=el.getAttribute('data-year');
+    var party=el.getAttribute('data-party')||'';
+    var type=el.getAttribute('data-type');
+    var isAI=el.getAttribute('data-ai')==='1';
+    // Derive partner from party string
+    var parts=party.split('-');
+    var partnerCodes=parts.length>1?parts:[];
+    var partnerNames=partnerCodes.map(function(p){return CNAMES[p]||p;}).join(' · ');
+    tt.innerHTML=
+      '<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(245,241,235,.4);margin-bottom:4px;">'+year+'</div>'+
+      '<div style="font-weight:500;font-size:13px;margin-bottom:2px;">'+(partnerNames||party)+'</div>'+
+      '<div style="font-size:11px;color:rgba(245,241,235,.5);">'+(TYPENAMES_C[type]||type)+'</div>'+
+      (isAI?'<div style="margin-top:8px;font-size:11px;color:#FFC600;">◆ Contains AI provisions</div>':'');
+    tt.style.display='block';
+    tt.style.left=Math.min(e.clientX+14,window.innerWidth-252)+'px';
+    tt.style.top=Math.max(8,e.clientY-30)+'px';
+  });
+  svg.addEventListener('mouseleave',function(){tt.style.display='none';});
+  svg.addEventListener('click',function(e){
+    var el=e.target.closest('.dot');
+    if(!el)return;
+    tt.style.display='none';
+    var prov=(el.getAttribute('data-prov')||'').split(',').map(Number);
+    window.openPanel(el.getAttribute('data-year'),el.getAttribute('data-party'),el.getAttribute('data-type'),el.getAttribute('data-ai')==='1',prov);
+  });
+}
+
+var AGMT=[
+  [2000,"SG-NZ","F",0,0,0,0,0,0],
+  [2002,"SG-JP","F",0,1,0,0,0,0],
+  [2003,"SG-AU","F",0,1,0,0,0,0],
+  [2003,"AU-TH","F",0,0,0,0,0,0],
+  [2004,"SG-KR","F",0,0,0,0,0,0],
+  [2004,"JP-ID","C",0,0,0,0,0,0],
+  [2005,"JP-MY","F",0,0,0,0,0,0],
+  [2005,"TH-NZ","F",0,1,0,0,0,0],
+  [2005,"SG","F",0,1,0,0,0,0],
+  [2005,"VN-CN","P",0,1,0,0,0,0],
+  [2006,"VN-JP","F",0,0,0,0,0,0],
+  [2007,"JP-PH","F",0,0,0,0,0,0],
+  [2008,"AU","F",0,1,0,0,0,0],
+  [2008,"SG","F",0,1,0,0,0,0],
+  [2008,"CN-NZ","F",0,0,0,0,0,0],
+  [2009,"JP","F",0,1,0,1,0,0],
+  [2009,"KR-IN","C",0,0,0,0,0,0],
+  [2010,"JP-VN","F",0,1,0,1,0,0],
+  [2010,"IN-JP","C",0,0,0,0,0,0],
+  [2010,"MY-NZ","F",0,1,0,0,0,0],
+  [2011,"SG","F",0,0,0,0,0,0],
+  [2012,"JP-AU","F",0,0,0,0,0,0],
+  [2013,"SG","F",0,1,0,0,0,0],
+  [2013,"AU-KR","F",0,1,0,0,0,0],
+  [2013,"CN-SG","F",0,0,0,0,0,0],
+  [2013,"KR","F",0,1,0,1,0,0],
+  [2014,"AU-JP","F",0,1,0,0,0,0],
+  [2014,"CN-AU","F",0,0,0,0,0,0],
+  [2014,"KR-CN","F",0,1,0,1,0,0],
+  [2015,"SG","F",0,1,0,1,0,0],
+  [2015,"VN-KR","F",0,1,0,1,0,0],
+  [2015,"JP","F",0,1,0,1,0,0],
+  [2015,"CN-KR","F",0,1,0,0,0,0],
+  [2015,"ID-AU","C",0,1,0,0,0,0],
+  [2015,"PH","F",0,0,0,0,0,0],
+  [2016,"SG","F",0,1,1,1,0,0],
+  [2016,"VN","F",0,0,0,0,0,0],
+  [2016,"KR-NZ","F",0,0,0,0,0,0],
+  [2017,"JP","F",0,0,0,0,0,0],
+  [2017,"SG","F",0,1,1,1,0,0],
+  [2017,"AU-ID","C",0,0,0,0,0,0],
+  [2018,"SG-IN","P",0,1,1,1,0,0],
+  [2018,"AU","F",0,1,1,1,0,0],
+  [2018,"NZ","F",0,0,0,0,0,0],
+  [2018,"JP","F",0,1,1,1,1,0],
+  [2018,"VN","F",0,0,0,0,0,0],
+  [2018,"SG","F",0,1,0,0,1,0],
+  [2018,"MY","F",0,0,0,0,0,0],
+  [2018,"AU","F",0,0,0,0,0,0],
+  [2019,"CN","F",0,1,0,0,0,0],
+  [2019,"ID-AU","C",0,1,1,1,0,0],
+  [2019,"TH","F",0,0,0,0,0,0],
+  [2019,"KR","F",0,1,0,0,1,0],
+  [2019,"CN-KH","F",0,1,0,0,0,0],
+  [2019,"SG","P",0,1,0,1,0,0],
+  [2019,"JP","F",0,1,1,1,0,0],
+  [2019,"AU","F",0,0,0,0,0,0],
+  [2019,"VN","F",0,1,0,0,1,0],
+  [2020,"SG-AU","D",1,1,1,1,1,1],
+  [2020,"SG-NZ","D",1,1,1,1,0,0],
+  [2020,"CN","F",0,0,0,0,0,0],
+  [2020,"JP","F",0,1,1,1,1,0],
+  [2020,"VN","F",0,1,0,0,0,0],
+  [2020,"KR-ID","C",0,1,1,1,1,1],
+  [2020,"TH-ID","P",0,0,0,0,0,0],
+  [2020,"CN","F",0,0,0,0,0,0],
+  [2020,"JP","F",0,0,0,0,0,0],
+  [2021,"AU","F",0,1,1,1,0,0],
+  [2021,"NZ","F",0,0,0,0,0,0],
+  [2021,"ID-CN","P",0,1,0,1,0,0],
+  [2022,"SG","D",1,1,1,1,0,0],
+  [2022,"KR-SG","D",1,1,1,1,0,1],
+  [2022,"AU-IN","C",1,1,0,0,0,0],
+  [2022,"KR-AU","F",0,0,0,0,0,0],
+  [2022,"CN","F",0,1,0,0,0,0],
+  [2022,"TH-KR","F",0,0,0,0,0,0],
+  [2023,"SG","D",1,1,1,1,0,1],
+  [2023,"AU","F",0,1,1,1,1,1],
+  [2023,"MY-SG","D",1,1,1,0,0,0],
+  [2023,"JP-SG","P",0,0,0,1,0,0],
+  [2023,"CN","F",0,1,0,1,0,0],
+  [2023,"NZ","C",0,1,1,1,1,0],
+  [2023,"VN","F",0,0,0,0,0,0],
+  [2023,"KR","F",0,1,0,1,0,0],
+  [2023,"BN-SG","P",0,0,0,0,0,0],
+  [2024,"SG-BN","D",1,1,0,1,0,0],
+  [2024,"MY-KH","F",0,0,0,0,0,0],
+  [2024,"KR","F",0,0,0,0,0,0],
+  [2024,"AU-PH","F",0,1,1,1,0,1],
+  [2024,"NZ-SG","D",0,0,0,0,0,0],
+  [2025,"KR-TH","F",1,1,0,1,0,0],
+  [2025,"SG-VN","D",1,1,0,1,1,1],
+  [2025,"PH-SG","D",1,1,1,1,1,1],
+  [2025,"TH-KH","F",0,1,0,0,0,0],
+  [2025,"JP-KR","F",0,1,1,1,1,1]
+];
+
+var COUNTS=[1,0,1,2,2,4,1,1,3,2,3,1,1,4,3,6,3,3,8,9,9,3,6,9,5,5];
+var AI_C   =[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,3,2,1,3];
+
+// ── FULL DATASET SVG ────────────────────────────────────────
+var allDots=[];
+function buildTimelineView(){
+  var wrap = document.getElementById('fd-wrap');
+  wrap.innerHTML='';
+  allDots=[];
+  var W=1328, H=596, PAD={l:0,r:0,t:16,b:84};
+  var N=26, DR=12, DS=Math.floor((H-PAD.t-PAD.b)/10);
+  var cW=W, cH=H-PAD.t-PAD.b;
+  var slot=cW/N;
+  function xP(i){return (i+0.5)*slot;}
+  var baseY=PAD.t+cH;
+
+  // Group by year
+  var byY={};
+  AGMT.forEach(function(a){
+    var yi=a[0]-2000;
+    if(!byY[yi])byY[yi]=[];
+    byY[yi].push(a);
+  });
+
+  var ns='http://www.w3.org/2000/svg';
+  var svg=document.createElementNS(ns,'svg');
+  svg.setAttribute('width',W);
+  svg.setAttribute('height',H);
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  svg.style.display='block';
+  svg.style.overflow='visible';
+
+  // Baseline
+  var bl=document.createElementNS(ns,'line');
+  bl.setAttribute('x1',0);bl.setAttribute('y1',baseY+DR+4);
+  bl.setAttribute('x2',W);bl.setAttribute('y2',baseY+DR+4);
+  bl.setAttribute('stroke','rgba(180,186,192,0.6)');bl.setAttribute('stroke-width','0.5');
+  svg.appendChild(bl);
+
+  // 2020 marker
+  var x20=xP(20)-slot/2;
+  var ml=document.createElementNS(ns,'line');
+  ml.setAttribute('x1',x20);ml.setAttribute('y1',0);
+  ml.setAttribute('x2',x20);ml.setAttribute('y2',baseY+DR+4);
+  ml.setAttribute('stroke','rgba(255,198,0,0.25)');ml.setAttribute('stroke-width','1');
+  ml.setAttribute('stroke-dasharray','4,4');
+  svg.appendChild(ml);
+
+  // Year labels
+  [0,5,10,15,20,25].forEach(function(i){
+    var t=document.createElementNS(ns,'text');
+    t.setAttribute('x',xP(i));t.setAttribute('y',baseY+DR+20);
+    t.setAttribute('text-anchor','middle');t.setAttribute('font-family','Archivo,sans-serif');
+    t.setAttribute('font-size',i===20?'12':'11');
+    t.setAttribute('font-weight',i===20?'600':'300');
+    t.setAttribute('fill',i===20?'#FFC600':'rgba(124,135,142,0.7)');
+    t.textContent=2000+i;
+    svg.appendChild(t);
+  });
+
+  // Dots — animated left to right
+  for(var yi=0;yi<N;yi++){
+    var agmts=byY[yi]||[];
+    agmts.sort(function(a,b){return b[3]-a[3];});
+    agmts.forEach(function(a,si){
+      var x=xP(yi), y=baseY-si*DS;
+      if(y<PAD.t+DR)return;
+      var c=document.createElementNS(ns,'circle');
+      c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',DR);
+      c.setAttribute('class','dot');
+      c.setAttribute('data-idx',allDots.length);
+      c.setAttribute('data-year',a[0]);
+      c.setAttribute('data-party',a[1]);
+      c.setAttribute('data-type',a[2]);
+      c.setAttribute('data-ai',a[3]?'1':'0');
+      c.setAttribute('data-prov',[a[3],a[4]||0,a[5]||0,a[6]||0,a[7]||0,a[8]||0].join(','));
+      var fill,stroke,sw='0';
+      if(a[3]){fill='rgba(255,198,0,0.92)';stroke='rgba(255,255,255,0.85)';sw='2.5';}
+      else if(a[2]==='D'){fill='#002855';}
+      else if(a[2]==='C'){fill='#7C878E';}
+      else if(a[2]==='P'){fill='#A7ACB1';}
+      else{fill='#B6BCC2';}
+      c.setAttribute('fill',fill);
+      if(stroke){c.setAttribute('stroke',stroke);c.setAttribute('stroke-width',sw);}
+      var delay=(yi*0.055)+(si*0.012);
+      c.style.opacity='0';
+      c.style.animation='dotPop 0.32s cubic-bezier(.34,1.3,.64,1) '+delay+'s both';
+      c.addEventListener('animationend',function(){this.style.animation='';this.style.opacity='1';});
+      svg.appendChild(c);
+      allDots.push({el:c,a:a,type:a[2],isAI:!!a[3],fill:fill,stroke:stroke});
+    });
+  }
+
+  // Legend
+  var lx=0, ly=H-26;
+  [{f:'rgba(255,198,0,0.9)',s:'#FFC600',lbl:'AI provision'},{f:'rgba(0,40,85,0.85)',s:null,lbl:'Digital Economy / Trade Agreement'},{f:'rgba(0,40,85,0.4)',s:null,lbl:'Comprehensive Economic Partnership'},{f:'rgba(0,40,85,0.2)',s:null,lbl:'Free Trade Agreement / Other'}].forEach(function(d){
+    var c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',lx+5);c.setAttribute('cy',ly);c.setAttribute('r',5);
+    c.setAttribute('fill',d.f);if(d.s){c.setAttribute('stroke',d.s);c.setAttribute('stroke-width','1.5');}
+    svg.appendChild(c);
+    var t=document.createElementNS(ns,'text');
+    t.setAttribute('x',lx+14);t.setAttribute('y',ly+4);
+    t.setAttribute('font-family','Archivo,sans-serif');t.setAttribute('font-size','11');
+    t.setAttribute('fill','#3A434C');t.setAttribute('font-weight','400');
+    t.textContent=d.lbl;
+    svg.appendChild(t);
+    lx+=14+d.lbl.length*6.5+16;
+  });
+
+  wrap.appendChild(svg);
+
+  // ── Rich detail data for selected agreements ──────────────
+  var DETAIL = {
+    'SG-AU-2020': {name:'Singapore–Australia Digital Economy Agreement',parties:['Singapore','Australia'],signed:'August 6, 2020',inForce:'December 8, 2020',type:'Digital Economy Agreement',summary:'A landmark bilateral agreement establishing mutual frameworks for digital trade, AI governance, and data flows. First DEA to include dedicated AI ethics provisions.',provisions:['Shared principles for trustworthy AI','Cross-border data flows without localisation','Mutual recognition of digital identities','Paperless trade and e-invoicing','Fintech regulatory cooperation','Source code protection']},
+    'SG-NZ-2020': {name:'Singapore–New Zealand Digital Economy Partnership Agreement',parties:['Singapore','New Zealand'],signed:'June 8, 2019',inForce:'January 7, 2021',type:'Digital Economy Agreement',summary:'The world\'s first bilateral digital economy agreement. Sets precedent for AI ethics cooperation and data innovation sandboxes as standard provisions.',provisions:['AI ethics and governance frameworks','Data innovation sandboxes','Digital identity interoperability','Fintech cross-border cooperation','Anti-spam standards','Open government data']},
+    'SG-2022': {name:'Singapore–UK Digital Economy Agreement',parties:['Singapore','United Kingdom'],signed:'February 25, 2022',inForce:'February 14, 2023',type:'Digital Economy Agreement',summary:'Extends Singapore\'s DEA model to the UK post-Brexit, with strengthened AI cooperation articles and a joint workplan for responsible AI deployment.',provisions:['Responsible AI workplan','Data flows and privacy frameworks','Digital trade facilitation','Cyber security cooperation','Emerging tech dialogue','Digital inclusion']},
+    'KR-SG-2022': {name:'Korea–Singapore Digital Partnership Agreement',parties:['South Korea','Singapore'],signed:'November 21, 2022',inForce:'January 14, 2024',type:'Digital Economy Agreement',summary:'Comprehensive digital trade agreement addressing AI governance, data localisation restrictions, and cross-border electronic payment systems.',provisions:['AI governance standards','Prohibition on data localisation','Electronic payment interoperability','Source code and algorithm protection','Digital consumer protection','Cybersecurity cooperation']},
+    'AU-IN-2022': {name:'Australia–India Economic Cooperation and Trade Agreement',parties:['Australia','India'],signed:'April 2, 2022',inForce:'December 29, 2022',type:'Comprehensive Economic Partnership',summary:'Broad trade agreement with a digital chapter covering AI, data flows, and emerging technologies — reflecting India\'s growing role in Asia-Pacific digital governance.',provisions:['AI and emerging technology cooperation','Digital trade facilitation','Data flow provisions','Electronic authentication','Cybersecurity dialogue','Digital skills partnership']},
+    'MY-SG-2023': {name:'Malaysia–Singapore Digital Economy Agreement',parties:['Malaysia','Singapore'],signed:'December 11, 2023',inForce:'Pending ratification',type:'Digital Economy Agreement',summary:'Deepens the longstanding bilateral relationship with a dedicated digital framework, including AI governance cooperation aligned with ASEAN AI governance principles.',provisions:['AI governance aligned with ASEAN frameworks','Cross-border data flows','Digital payment linkages','Supply chain digitalisation','Green and digital economy nexus','SME digital access']},
+    'SG-BN-2024': {name:'Singapore–Brunei Digital Economy Agreement',parties:['Singapore','Brunei Darussalam'],signed:'March 1, 2024',inForce:'Pending ratification',type:'Digital Economy Agreement',summary:'Extends the DEA network to Brunei, incorporating lessons from earlier agreements including updated AI provisions reflecting evolving international standards.',provisions:['AI regulatory dialogue','Data flows and trust frameworks','Digital identity recognition','Fintech and digital payments','Paperless trade','Digital skills exchange']},
+    'SG-VN-2025': {name:'Singapore–Vietnam Digital Economy Agreement',parties:['Singapore','Vietnam'],signed:'January 2025',inForce:'Pending ratification',type:'Digital Economy Agreement',summary:'Part of Singapore\'s expanding DEA network in Southeast Asia, with AI governance provisions designed to complement Vietnam\'s national AI strategy.',provisions:['AI governance cooperation','Data innovation initiatives','Digital trade facilitation','Fintech partnerships','E-commerce frameworks','Capacity building']},
+    'PH-SG-2025': {name:'Philippines–Singapore Digital Economy Agreement',parties:['Philippines','Singapore'],signed:'2025',inForce:'Pending ratification',type:'Digital Economy Agreement',summary:'Brings the Philippines into Singapore\'s DEA network, with provisions addressing AI governance and digital infrastructure development.',provisions:['AI governance principles','Cross-border data frameworks','Digital connectivity','E-government cooperation','Digital financial services','Digital skills and inclusion']}
+  };
+
+  var TYPENAMES={D:'Digital Economy Agreement',F:'Free Trade Agreement',C:'Comprehensive Economic Partnership',P:'Partnership Agreement'};
+
+  function openPanel(year,party,type,isAI,provFlags){
+    var key=party+'-'+year;
+    // Try variations
+    var d=DETAIL[key]||DETAIL[party.split('-')[0]+'-'+year]||null;
+    var typeName=TYPENAMES[type]||'Agreement';
+    var panel=document.getElementById('fd-panel');
+    document.getElementById('fp-year').textContent=year;
+    document.getElementById('fp-aitag').innerHTML=isAI?'<span style="display:inline-block;background:#FFC600;color:#fff;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border-radius:3px;">◆ Contains AI Provisions</span>':'';
+    var partyDisplay=(party||'').replace(/-/g,' · ');
+    document.getElementById('fp-name').textContent=d?d.name:partyDisplay+' '+typeName;
+    document.getElementById('fp-type').textContent=d?d.type:typeName;
+
+    // Party chips
+    var pc=document.getElementById('fp-parties');
+    pc.innerHTML='';
+    var partyList=d?d.parties:partyDisplay.split(' · ');
+    partyList.forEach(function(p){
+      pc.innerHTML+='<span class="fp-chip">'+p+'</span>';
+    });
+
+    // Meta
+    var mc=document.getElementById('fp-meta');
+    if(d&&d.signed){
+      mc.innerHTML='<div class="fp-meta-item"><div class="fp-meta-label">Signed</div><div class="fp-meta-val">'+d.signed+'</div></div>'+
+        '<div class="fp-meta-item"><div class="fp-meta-label">In Force</div><div class="fp-meta-val">'+d.inForce+'</div></div>';
+      mc.style.display='grid';
+    } else {
+      mc.innerHTML='<div class="fp-meta-item"><div class="fp-meta-label">Year</div><div class="fp-meta-val">'+year+'</div></div>';
+      mc.style.display='grid';
+    }
+
+    // Summary
+    document.getElementById('fp-summary').textContent=d?d.summary:'';
+
+    // Provisions
+    var pv=document.getElementById('fp-provisions');
+    var PROV_LABELS=['AI governance provisions','Cross-border data flows','Source code protection','Cybersecurity cooperation','Right to regulate safeguards','AI-specific commitments'];
+    var derived=(provFlags||[]).map(function(v,i){return v>0?PROV_LABELS[i]:null;}).filter(Boolean);
+    if(d&&d.provisions&&d.provisions.length){
+      pv.innerHTML='<div style="font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:#7C878E;margin-bottom:12px;">Key Provisions</div>'+
+        d.provisions.map(function(p){return '<div class="fp-prov-row"><div style="width:6px;height:6px;border-radius:50%;background:'+(isAI?'#FFC600':'#A7ACB1')+';flex-shrink:0;margin-top:5px;"></div><span>'+p+'</span></div>';}).join('');
+    } else if(derived.length){
+      pv.innerHTML='<div style="font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:#7C878E;margin-bottom:12px;">Provisions Covered</div>'+
+        derived.map(function(p){return '<div class="fp-prov-row"><div style="width:6px;height:6px;border-radius:50%;background:'+(isAI?'#FFC600':'#A7ACB1')+';flex-shrink:0;margin-top:5px;"></div><span>'+p+'</span></div>';}).join('');
+    } else { pv.innerHTML=''; }
+
+    panel.classList.add('open');
+  }
+  window.openPanel=openPanel;
+
+  window.closePanel=function(){document.getElementById('fd-panel').classList.remove('open');};
+
+  // Click handler
+  svg.addEventListener('click',function(e){
+    var el=e.target.closest('.dot');
+    if(!el){return;}
+    var year=el.getAttribute('data-year');
+    var party=el.getAttribute('data-party')||'';
+    var type=el.getAttribute('data-type');
+    var isAI=el.getAttribute('data-ai')==='1';
+    var prov=(el.getAttribute('data-prov')||'').split(',').map(Number);
+    openPanel(year,party,type,isAI,prov);
+  });
+  document.addEventListener('click',function(e){
+    if(!e.target.closest('#fd-panel')&&!e.target.closest('svg')&&!e.target.closest('#fd-country-wrap'))
+      document.getElementById('fd-panel').classList.remove('open');
+  });
+
+  // Filter
+  window.filterDots=function(type,btn){
+    document.querySelectorAll('#fd-filter-area button').forEach(function(p){
+      p.style.background='none';p.style.borderColor='#D2D6DA';p.style.color='#7C878E';
+    });
+    btn.style.background='#1E252B';btn.style.borderColor='#1E252B';btn.style.color='#FFFFFF';
+    allDots.forEach(function(d){
+      var show=type==='all'||(type==='ai'&&d.isAI)||type===d.type;
+      d.el.style.opacity=show?'1':'0.06';
+    });
+  };
+}
+buildTimelineView();
+
+function buildTrendsChart(){
+  var wrap=document.getElementById('fd-trends-wrap');
+  var W=1328,H=572,N=26;
+  var PAD={l:48,r:200,t:24,b:56};
+  var cW=W-PAD.l-PAD.r,cH=H-PAD.t-PAD.b;
+  var ns='http://www.w3.org/2000/svg';
+  function xP(i){return PAD.l+i*(cW/(N-1));}
+
+  // Build cumulative counts
+  var series={sc:[],cy:[],rr:[],ai:[],dea:[]};
+  var cum={sc:0,cy:0,rr:0,ai:0,dea:0};
+  for(var yi=0;yi<N;yi++){
+    AGMT.forEach(function(a){if(a[0]-2000===yi){
+      if(a[5]>0) cum.sc++;
+      if(a[6]>0) cum.cy++;
+      if(a[7]>0) cum.rr++;
+      if(a[8]>0) cum.ai++;
+      if(a[2]==='D') cum.dea++;
+    }});
+    series.sc.push(cum.sc); series.cy.push(cum.cy); series.rr.push(cum.rr);
+    series.ai.push(cum.ai); series.dea.push(cum.dea);
+  }
+  var maxY=Math.max.apply(null,series.cy);
+  function yP(v){return PAD.t+cH-(v/maxY)*cH;}
+
+  var LINES=[
+    {key:'cy',label:'Cybersecurity',color:'#00B0B9'},
+    {key:'sc',label:'Source Code / Algorithms',color:'#E31C79'},
+    {key:'rr',label:'Right to Regulate',color:'#63BE45'},
+    {key:'ai',label:'AI-Specific',color:'#FFC600'},
+    {key:'dea',label:'Digital Economy Agreements',color:'#002855'}
+  ];
+
+  var svg=document.createElementNS(ns,'svg');
+  svg.setAttribute('width',W);svg.setAttribute('height',H);
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.style.display='block';
+
+  // Grid lines
+  [10,20,30,40,50].filter(function(v){return v<=maxY;}).forEach(function(v){
+    var y=yP(v);
+    var gl=document.createElementNS(ns,'line');
+    gl.setAttribute('x1',PAD.l);gl.setAttribute('y1',y);gl.setAttribute('x2',W-PAD.r);gl.setAttribute('y2',y);
+    gl.setAttribute('stroke','rgba(180,186,192,0.3)');gl.setAttribute('stroke-width','0.5');
+    svg.appendChild(gl);
+    var t=document.createElementNS(ns,'text');
+    t.setAttribute('x',PAD.l-6);t.setAttribute('y',y+4);
+    t.setAttribute('text-anchor','end');t.setAttribute('font-family','Archivo,sans-serif');
+    t.setAttribute('font-size','10');t.setAttribute('fill','rgba(124,135,142,0.6)');
+    t.textContent=v;svg.appendChild(t);
+  });
+
+  // 2020 marker
+  var x20=xP(20);
+  var ml=document.createElementNS(ns,'line');
+  ml.setAttribute('x1',x20);ml.setAttribute('y1',PAD.t);ml.setAttribute('x2',x20);ml.setAttribute('y2',H-PAD.b);
+  ml.setAttribute('stroke','rgba(255,198,0,0.25)');ml.setAttribute('stroke-width','1');ml.setAttribute('stroke-dasharray','4,4');
+  svg.appendChild(ml);
+
+  // Draw lines with pathLength animation
+  var labelData=[];
+  LINES.forEach(function(l,li){
+    var s=series[l.key];
+    var startIdx=0; while(startIdx<s.length-1 && s[startIdx]===0){startIdx++;}
+    var visible=s.slice(startIdx);
+    var pts=visible.map(function(v,i){return xP(startIdx+i)+','+yP(v);}).join(' ');
+    var cas=document.createElementNS(ns,'polyline');
+    cas.setAttribute('points',pts);cas.setAttribute('fill','none');
+    cas.setAttribute('stroke','#FFFFFF');cas.setAttribute('stroke-width','5');
+    cas.setAttribute('stroke-linecap','round');cas.setAttribute('stroke-linejoin','round');
+    cas.setAttribute('pathLength','1');cas.style.strokeDasharray='1';cas.style.strokeDashoffset='1';
+    cas.style.animation='drawLine 2s ease-out '+(li*0.3)+'s both';
+    svg.appendChild(cas);
+    var pl=document.createElementNS(ns,'polyline');
+    pl.setAttribute('points',pts);pl.setAttribute('fill','none');
+    pl.setAttribute('stroke',l.color);pl.setAttribute('stroke-width','2');
+    pl.setAttribute('stroke-linecap','round');pl.setAttribute('stroke-linejoin','round');
+    pl.setAttribute('pathLength','1');
+    pl.style.strokeDasharray='1';
+    pl.style.strokeDashoffset='1';
+    pl.style.animation='drawLine 2s ease-out '+(li*0.3)+'s both';
+    svg.appendChild(pl);
+
+    // Start dot — anchors the line's true origin (e.g. right on the 2020 marker)
+    var sd=document.createElementNS(ns,'circle');
+    sd.setAttribute('cx',xP(startIdx));sd.setAttribute('cy',yP(visible[0]));sd.setAttribute('r','3.5');
+    sd.setAttribute('fill',l.color);
+    sd.style.opacity='0';sd.style.animation='fadeIn 0.3s ease-out '+(li*0.3+0.1)+'s both';
+    svg.appendChild(sd);
+
+    // End dot
+    var last=series[l.key][N-1];
+    var ed=document.createElementNS(ns,'circle');
+    ed.setAttribute('cx',xP(N-1));ed.setAttribute('cy',yP(last));ed.setAttribute('r','5');
+    ed.setAttribute('fill',l.color);
+    ed.style.opacity='0';ed.style.animation='fadeIn 0.3s ease-out '+(li*0.3+1.8)+'s both';
+    svg.appendChild(ed);
+
+    // End label — collect for post-loop de-collision
+    labelData.push({dotY:yP(last),color:l.color,text:l.label+' ('+last+')',delay:li*0.3+1.9});
+  });
+
+  // Resolve label vertical collisions while keeping each near its dot
+  labelData.sort(function(a,b){return a.dotY-b.dotY;});
+  labelData.forEach(function(d){d.labelY=d.dotY;});
+  var MINGAP=20;
+  for(var i=1;i<labelData.length;i++){
+    if(labelData[i].labelY-labelData[i-1].labelY<MINGAP){labelData[i].labelY=labelData[i-1].labelY+MINGAP;}
+  }
+  // Center each touching cluster on the mean of its dots so labels align with dots
+  var ci=0;
+  while(ci<labelData.length){
+    var cj=ci;
+    while(cj+1<labelData.length && (labelData[cj+1].labelY-labelData[cj].labelY)<MINGAP+0.5){cj++;}
+    var sd=0,sl=0,n=cj-ci+1;
+    for(var k=ci;k<=cj;k++){sd+=labelData[k].dotY;sl+=labelData[k].labelY;}
+    var sh=(sd-sl)/n;
+    for(var k2=ci;k2<=cj;k2++){labelData[k2].labelY+=sh;}
+    ci=cj+1;
+  }
+  var dotX=xP(N-1),labelX=dotX+14;
+  labelData.forEach(function(d){
+    var et=document.createElementNS(ns,'text');
+    et.setAttribute('x',labelX);et.setAttribute('y',d.labelY+3);
+    et.setAttribute('font-family','Archivo,sans-serif');et.setAttribute('font-size','11');
+    et.setAttribute('fill',d.color);et.setAttribute('font-weight','500');
+    et.textContent=d.text;
+    et.style.opacity='0';et.style.animation='fadeIn 0.3s ease-out '+d.delay+'s both';
+    svg.appendChild(et);
+  });
+
+  // Year axis
+  [0,5,10,15,20,25].forEach(function(i){
+    var t=document.createElementNS(ns,'text');
+    t.setAttribute('x',xP(i));t.setAttribute('y',H-PAD.b+18);
+    t.setAttribute('text-anchor','middle');t.setAttribute('font-family','Archivo,sans-serif');
+    t.setAttribute('font-size',i===20?'12':'10');t.setAttribute('font-weight',i===20?'600':'300');
+    t.setAttribute('fill',i===20?'#FFC600':'rgba(124,135,142,0.7)');
+    t.textContent=2000+i;svg.appendChild(t);
+  });
+
+  wrap.appendChild(svg);
+}
+
+// Build intro chart on load
+buildIntroChart();
+startIntroLoop();
+</script>
+</body>
+</html>
